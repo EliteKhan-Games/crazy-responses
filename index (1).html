@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111318">
+  <title>Crazy Responses</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+  <header class="topbar">
+    <a class="brand" href="#" id="brandHome"><span class="brand-mark">CR</span><span>crazy<span class="brand-light">responses</span></span></a>
+    <div class="top-actions">
+      <button class="icon-button" id="themeToggle" aria-label="Toggle theme" title="Toggle theme">☼</button>
+      <button class="icon-button" id="soundToggle" aria-label="Toggle sound" title="Toggle sound">♫</button>
+      <span class="connection" id="connectionState"><i></i> Connecting</span>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="screen active" id="homeScreen">
+      <div class="hero">
+        <div class="eyebrow"><span class="eyebrow-dot"></span> THE PARTY GAME OF QUESTIONABLE ANSWERS</div>
+        <h1>Fill the blank.<br><span>Break the room.</span></h1>
+        <p class="hero-copy">A prompt, a blank, and your questionable sense of humor. Make your friends laugh. Try not to vote for yourself.</p>
+      </div>
+      <div class="home-grid">
+        <article class="panel home-panel">
+          <div class="panel-heading"><div><div class="eyebrow">YOUR PLAYER</div><h2>Ready to play?</h2></div><span class="pill">GUEST MODE</span></div>
+          <label class="field-label" for="usernameInput">Display name</label>
+          <input id="usernameInput" maxlength="18" minlength="2" placeholder="Pick a name (2–18 characters)">
+          <p class="field-help">Your name is locked while you're in a room. Your weekly points follow your player identity.</p>
+          <div class="button-row">
+            <button class="button primary" id="createRoomBtn">Create a room <span>↗</span></button>
+            <button class="button secondary" id="showJoinBtn">Join with code</button>
+          </div>
+          <div class="join-row hidden" id="joinRow"><input id="roomCodeInput" maxlength="6" placeholder="ROOM CODE" autocomplete="off"><button class="button primary" id="joinRoomBtn">Join</button></div>
+          <div class="error-text" id="homeError"></div>
+        </article>
+        <article class="panel leaderboard-panel">
+          <div class="panel-heading"><div><div class="eyebrow">THIS WEEK</div><h2>Global leaderboard</h2></div><span class="pill live-pill">LIVE</span></div>
+          <div id="leaderboardList" class="leaderboard-list"><div class="empty-state">Loading this week's top players…</div></div>
+          <div class="leaderboard-foot">Resets every Monday · Top 10 only</div>
+        </article>
+      </div>
+      <div class="home-footer"><span>✦</span> Good answers are overrated.</div>
+    </section>
+
+    <section class="screen" id="createScreen">
+      <button class="back-link" data-screen="homeScreen">← Back home</button>
+      <div class="page-title"><div class="eyebrow">NEW ROOM</div><h1>Set the <span>scene.</span></h1><p>Make a room, invite your friends, and let the bad answers begin.</p></div>
+      <article class="panel settings-panel">
+        <label class="field-label" for="roomNameInput">Room name <span class="optional">OPTIONAL</span></label>
+        <input id="roomNameInput" maxlength="32" placeholder="e.g. The Unhinged Lounge">
+        <div class="settings-grid">
+          <div><label class="field-label" for="roundCount">Number of rounds</label><select id="roundCount"><option value="3">3 rounds</option><option value="5" selected>5 rounds</option><option value="10">10 rounds</option></select></div>
+          <div><label class="field-label" for="playerLimit">Player limit</label><select id="playerLimit"><option>3</option><option>4</option><option>5</option><option selected>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></div>
+          <div><label class="field-label" for="promptStyle">Prompt style</label><select id="promptStyle"><option value="mixed">Mixed</option><option value="comedy">Comedy</option><option value="chaotic">Chaotic</option></select></div>
+          <div><label class="field-label" for="visibility">Visibility</label><select id="visibility"><option value="true">Public</option><option value="false">Private</option></select></div>
+        </div>
+        <div class="button-row"><button class="button primary" id="confirmCreateBtn">Create room <span>↗</span></button></div>
+        <div class="error-text" id="createError"></div>
+      </article>
+    </section>
+
+    <section class="screen" id="roomScreen">
+      <div class="room-topline"><button class="back-link" id="leaveRoomBtn">← Leave room</button><span class="pill" id="roomStatusPill">LOBBY</span></div>
+      <div class="room-heading"><div><div class="eyebrow" id="roomCodeLabel">ROOM · ------</div><h1 id="roomNameHeading">The Lobby</h1><p id="roomMeta">Waiting for players</p></div><button class="button secondary small" id="copyCodeBtn">Copy invite code</button></div>
+      <div class="room-layout">
+        <article class="panel players-panel"><div class="panel-heading"><div><div class="eyebrow">THE CREW</div><h2>Players <span id="playerCount" class="count">0/6</span></h2></div><span class="pill" id="hostBadge">HOST ROOM</span></div><div id="playersList" class="players-list"></div>
+          <div class="host-settings hidden" id="hostSettings"><div class="eyebrow">ROOM SETTINGS</div><div class="settings-grid compact"><div><label class="field-label">Room name</label><input id="editRoomName" maxlength="32"></div><div><label class="field-label">Visibility</label><select id="editVisibility"><option value="true">Public</option><option value="false">Private</option></select></div><div><label class="field-label">Player limit</label><select id="editLimit"><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></div><div><label class="field-label">Rounds</label><select id="editRounds"><option>3</option><option>5</option><option>10</option></select></div></div><button class="button secondary small" id="saveSettingsBtn">Save settings</button></div>
+          <div class="button-row host-start"><button class="button primary full" id="startGameBtn">Start game <span>↗</span></button></div><p class="field-help" id="lobbyHint">At least 3 players are needed to start.</p>
+        </article>
+        <aside class="side-stack"><article class="panel invite-panel"><div class="eyebrow">INVITE FRIENDS</div><div class="invite-code" id="inviteCode">------</div><p>Share this code with your friends.</p></article>
+        <article class="panel chat-panel"><div class="panel-heading"><div><div class="eyebrow">LOBBY ONLY</div><h2>Lobby chat</h2></div></div><div id="chatMessages" class="chat-messages"><div class="empty-state">Say something questionable.</div></div><form id="chatForm" class="chat-form"><input id="chatInput" maxlength="240" placeholder="Message the lobby…"><button class="button primary" type="submit">Send</button></form></article></aside>
+      </div>
+    </section>
+
+    <section class="screen" id="gameScreen">
+      <div class="game-topline"><span class="pill" id="gameRoundPill">ROUND 1 / 5</span><span class="timer" id="gameTimer">01:00</span><button class="back-link" id="gameLeaveBtn">Leave match</button></div>
+      <div class="game-progress" id="gameProgress"></div>
+      <div id="gameContent"></div>
+    </section>
+
+    <section class="screen" id="browserScreen">
+      <button class="back-link" data-screen="homeScreen">← Back home</button>
+      <div class="page-title"><div class="eyebrow">PUBLIC ROOMS</div><h1>Find your <span>people.</span></h1><p>Jump into an open room and join the chaos.</p></div>
+      <article class="panel"><div class="panel-heading"><h2>Open rooms</h2><button class="button secondary small" id="refreshRoomsBtn">↻ Refresh</button></div><div id="publicRoomsList" class="public-rooms"><div class="empty-state">Loading rooms…</div></div></article>
+    </section>
+  </main>
+  <div class="toast" id="toast"></div>
+  <div class="modal-backdrop hidden" id="modalBackdrop"><div class="modal panel"><button class="modal-close" id="modalClose">×</button><div id="modalContent"></div></div></div>
+  <footer class="site-footer">CRAZY RESPONSES <span>·</span> SAY THE THING YOU SHOULDN'T</footer>
+</body>
+</html>
