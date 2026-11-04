@@ -1,1 +1,1 @@
-window.CRAZY_CONFIG={SUPABASE_URL:"https://YOUR-PROJECT.supabase.co",SUPABASE_ANON_KEY:"YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY"};
+window.CRAZY_CONFIG={SUPABASE_URL:"https://uqyeydrrhtesgckxqfqt.supabase.co",SUPABASE_ANON_KEY:"sb_publishable_P8uVs3Izfk0Dh0nJ6H_t3g_c-vIredx"};
