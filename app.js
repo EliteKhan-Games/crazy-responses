@@ -8,6 +8,7 @@
     code: null,
     room: null,
     players: [],
+    standings: [],
     round: null,
     poll: null,
     timer: null,
@@ -167,6 +168,7 @@
       }
       S.room = data.room;
       S.players = data.players || [];
+      S.standings = data.standings || [];
       S.round = data.round;
       renderRoom();
       if (S.room.status !== "lobby") {
@@ -244,6 +246,33 @@
     }
   }
 
+  function finalStandingsMarkup() {
+    const rows = S.standings || [];
+    if (!rows.length) {
+      return '<p>Final standings could not be loaded. Run the latest Supabase results/leaderboard SQL update.</p>';
+    }
+
+    const first = rows[0];
+    const bestWins = Number(first.round_wins || 0);
+    const bestPoints = Number(first.points || 0);
+    if (bestWins === 0 && bestPoints === 0) {
+      return '<div class="winner-banner"><strong>No game winner</strong><p>No votes were recorded during this game.</p></div>' + standingsRowsMarkup(rows);
+    }
+
+    const winners = rows.filter((row) =>
+      Number(row.round_wins || 0) === bestWins && Number(row.points || 0) === bestPoints
+    );
+    const names = winners.map((row) => esc(row.player_name)).join(', ');
+    const title = winners.length > 1 ? 'GAME WINNERS' : 'GAME WINNER';
+    return `<div class="winner-banner final-winner"><div class="winner-kicker">${title}</div><strong>🏆 ${names}</strong><p>${bestWins} round win${bestWins === 1 ? '' : 's'} · ${bestPoints} point${bestPoints === 1 ? '' : 's'}</p></div><h3>Final standings</h3>` + standingsRowsMarkup(rows);
+  }
+
+  function standingsRowsMarkup(rows) {
+    return rows.map((row, index) =>
+      `<div class="result-row standings-row"><div class="result-answer">${index + 1}. ${esc(row.player_name)}</div><div class="result-meta">${Number(row.round_wins || 0)} round win${Number(row.round_wins || 0) === 1 ? '' : 's'} · ${Number(row.points || 0)} point${Number(row.points || 0) === 1 ? '' : 's'}</div></div>`
+    ).join('');
+  }
+
   function renderGame() {
     const round = S.round;
     if (!round) {
@@ -288,13 +317,21 @@
       }).join("");
       if (hasVoted) html += '<p class="tag">Your vote has been recorded.</p>';
     } else if (round.phase === "results") {
-      html += "<h3>Round results</h3>" + (round.results || []).map((item) =>
-        `<p>${esc(item.answer_text)} — ${item.votes} votes</p>`
+      const results = round.results || [];
+      const winner = results.find((item) => item.is_winner) || round.round_winner;
+      html += "<h3>Round results</h3>";
+      if (winner) {
+        html += `<div class="winner-banner"><div class="winner-kicker">ROUND WINNER</div><strong>🏆 ${esc(winner.player_name)}</strong><p>${esc(winner.answer_text)} · ${winner.votes} vote${winner.votes === 1 ? "" : "s"}</p></div>`;
+      } else {
+        html += '<div class="winner-banner"><strong>No round winner</strong><p>No votes were recorded for this round.</p></div>';
+      }
+      html += results.map((item) =>
+        `<div class="result-row ${item.is_winner ? "is-winner" : ""}"><div class="result-answer">${esc(item.answer_text)}</div><div class="result-meta"><strong>${esc(item.player_name)}</strong> · ${item.votes} vote${item.votes === 1 ? "" : "s"}${item.is_winner ? " · 🏆 Winner" : ""}</div></div>`
       ).join("");
       if (S.room.host_player_id === S.id) html += '<button id="nextBtn" type="button">Continue</button>';
       else html += "<p>Waiting for the host or the results timer…</p>";
     } else if (round.phase === "finished") {
-      html += "<h3>Game over!</h3>";
+      html += "<h3>Game over!</h3>" + finalStandingsMarkup();
       if (S.room.host_player_id === S.id) html += '<button id="rematchBtn" type="button">Play again</button>';
     } else {
       html += "<p>Waiting for players…</p>";
@@ -511,9 +548,9 @@
       screen("leaderboardScreen");
       try {
         const rows = await rpc("cr_weekly_leaderboard");
-        $("leaderboardList").innerHTML = rows.map((row, index) =>
-          `<p>${index + 1}. ${esc(row.player_name)} — ${row.points}</p>`
-        ).join("") || "No scores this week.";
+        $("leaderboardList").innerHTML = '<p class="leaderboard-note">Points are votes your answers received this week.</p>' + (rows.length ? rows.map((row, index) =>
+          `<div class="result-row leaderboard-row"><strong>${index + 1}. ${esc(row.player_name)}</strong><span>${Number(row.points || 0)} points</span></div>`
+        ).join("") : '<p>No votes have been received this week yet.</p>');
       } catch (error) {
         $("leaderboardList").textContent = error.message;
       }
